@@ -114104,7 +114104,7 @@ MonoBehaviour:
     type: 3}
   _spawnCooldown: 10
   _retryDelay: 1
-  _maxSpawnsFromThisPoint: 1
+  _maxSpawnsFromThisPoint: 3
   _alphaSpawnChance: 0.1
   _minSpawnDistance: 10
   _maxSpawnDistance: 50
@@ -162207,7 +162207,7 @@ MonoBehaviour:
     type: 3}
   _spawnCooldown: 10
   _retryDelay: 1
-  _maxSpawnsFromThisPoint: 1
+  _maxSpawnsFromThisPoint: 3
   _alphaSpawnChance: 0
   _minSpawnDistance: 10
   _maxSpawnDistance: 50
@@ -173748,8 +173748,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1537795041945745824}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.1654256, y: 0.37621132, z: -0.06845434, w: -0.9090729}
-  m_LocalPosition: {x: 71.70236, y: -1.1991982, z: -32.21473}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.14999962, y: 2.15, z: -0.080001816}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
