@@ -67,7 +67,7 @@ namespace My_Scripts
             if (_isGameEnded) return;
             _isGameEnded = true;
 
-            SetActiveIfAssigned(_gameOverPanel, true);
+            ShowEndPanel(_gameOverPanel);
             EndGameLogic();
         }
 
@@ -76,7 +76,7 @@ namespace My_Scripts
             if (_isGameEnded) return;
             _isGameEnded = true;
 
-            SetActiveIfAssigned(_victoryPanel, true);
+            ShowEndPanel(_victoryPanel);
             EndGameLogic();
         }
 
@@ -112,6 +112,17 @@ namespace My_Scripts
         private static void SetActiveIfAssigned(GameObject obj, bool active)
         {
             if (obj != null) obj.SetActive(active);
+        }
+
+        // Canvas draws children in hierarchy order: later siblings render (and receive
+        // raycasts) ON TOP of earlier ones. Moving the end panel to the last position
+        // guarantees no other UI element (e.g. the boss health bar) can cover its buttons.
+        private static void ShowEndPanel(GameObject panel)
+        {
+            if (panel == null) return;
+
+            panel.SetActive(true);
+            panel.transform.SetAsLastSibling();
         }
     }
 }

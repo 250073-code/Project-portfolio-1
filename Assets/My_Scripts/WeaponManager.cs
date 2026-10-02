@@ -10,7 +10,7 @@ namespace My_Scripts
         [SerializeField] private GunSystem _smg;
         [SerializeField] private GunSystem _rifle;
 
-        private bool _isRifleUnlocked = false;
+        public bool IsRifleUnlocked { get; private set; }
 
         private GunSystem _activeGun;
         public GunSystem ActiveGun => _activeGun;
@@ -58,7 +58,7 @@ namespace My_Scripts
 
         private void OnWeapon2Performed(UnityEngine.InputSystem.InputAction.CallbackContext ctx)
         {
-            if (_isRifleUnlocked) SelectWeapon(_rifle);
+            if (IsRifleUnlocked) SelectWeapon(_rifle);
         }
 
         private void OnReloadPerformed(UnityEngine.InputSystem.InputAction.CallbackContext ctx)
@@ -69,6 +69,13 @@ namespace My_Scripts
         private void SelectWeapon(GunSystem newWeapon)
         {
             if (newWeapon == null || newWeapon == _activeGun) return;
+
+            // Reload finishes via an Animation Event that calls FinishReloading() on
+            // whatever gun is ActiveGun AT THAT MOMENT - not whichever gun actually started
+            // reloading. Swapping mid-reload would leave the old gun stuck in _isReloading
+            // forever (its FinishReloading() call never arrives) while the new gun spuriously
+            // "finishes" a reload it never started. Simplest correct fix: disallow the swap.
+            if (_activeGun != null && _activeGun.IsReloading) return;
 
             if (_smg != null) _smg.gameObject.SetActive(false);
             if (_rifle != null) _rifle.gameObject.SetActive(false);
@@ -81,7 +88,7 @@ namespace My_Scripts
 
         public void UnlockRifle()
         {
-            _isRifleUnlocked = true;
+            IsRifleUnlocked = true;
             SelectWeapon(_rifle);
         }
     }

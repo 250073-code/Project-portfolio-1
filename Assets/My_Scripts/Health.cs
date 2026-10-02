@@ -20,6 +20,9 @@ namespace My_Scripts
         [SerializeField] private string _bossName;
         private float _currentHealth;
         private bool IsBoss => !string.IsNullOrEmpty(_bossName);
+        
+        public float CurrentHealth => _currentHealth;
+        public float MaxHealth => _maxHealth;
 
         [Header("Events (Архитектура)")]
         public UnityEvent<string> OnBossActivated;
