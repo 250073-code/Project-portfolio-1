@@ -78303,7 +78303,15 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
-  - time: 1.3333334
+  - time: 1
+    functionName: HitSoundEffect
+    data: 
+    objectReferenceParameter: {fileID: 7157715376209904975, guid: 14b908e0282224347963e19aa26a0a09,
+      type: 3}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 1.3
     functionName: HitPlayer
     data: 
     objectReferenceParameter: {fileID: 3352198587645053917, guid: d9f73c0ad14072b47b461a0e0354ae53,

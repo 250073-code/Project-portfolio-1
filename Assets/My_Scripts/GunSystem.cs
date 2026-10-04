@@ -4,33 +4,37 @@ namespace My_Scripts
 {
     public class GunSystem : MonoBehaviour
     {
-        [Header("Settings")] [SerializeField] private float _damage = 10f;
+        [Header("Settings")] 
+        [SerializeField] private float _damage = 10f;
         [SerializeField] private float _fireRate = 0.1f; // Delay between shots
         [SerializeField] private int _magazineSize = 30;
         [SerializeField] private float _range = 100f;
 
-        [Header("Physics Settings")] [SerializeField]
-        private float _impactForce = 15f;
+        [Header("Physics Settings")] 
+        [SerializeField] private float _impactForce = 15f;
 
-        [Header("Effect Lifetimes")] [SerializeField]
-        private float _muzzleFlashLifetime = 1f;
+        [Header("Effect Lifetimes")] 
+        [SerializeField] private float _muzzleFlashLifetime = 1f;
 
         [SerializeField] private float _impactEffectLifetime = 1f;
 
-        [Header("References")] [SerializeField]
-        private Transform _firePoint;
-
+        [Header("References")] 
+        [SerializeField] private Transform _firePoint;
         [SerializeField] private Animator _fpsAnimator;
-
         [SerializeField] private Transform _muzzlePoint;
 
         // Layers the raycast should HIT. Anything not on this mask (e.g. the player) is ignored.
         [SerializeField] private LayerMask _hittableLayers;
 
-        [Header("Visual Prefabs")] [SerializeField]
-        private GameObject _muzzleFlash;
-
+        [Header("Visual Prefabs")] 
+        [SerializeField] private GameObject _muzzleFlash;
         [SerializeField] private GameObject _impactEffect;
+        
+        [Header("Audio")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _shootSound;
+        [SerializeField] private AudioClip _reloadSound;
+        [SerializeField] private AudioClip _emptySound; // played when Shoot is triggered with 0 ammo
 
         private int _currentAmmo;
         private float _nextTimeToFire;
@@ -58,41 +62,42 @@ namespace My_Scripts
 
         private void Update()
         {
-            // Game over / victory / pause: clicking a UI button must not also fire the gun.
             if (Time.timeScale == 0f) return;
-
+ 
             bool canFire = !_isReloading && Time.time >= _nextTimeToFire && _currentAmmo > 0;
             bool wantsToFire = _inputs.GamePlay.Shoot.triggered && canFire;
-
+ 
             if (wantsToFire)
             {
                 _nextTimeToFire = Time.time + _fireRate;
                 Shoot();
             }
-
+            else if (_inputs.GamePlay.Shoot.triggered && !_isReloading && _currentAmmo <= 0)
+            {
+                PlaySound(_emptySound); // dry-fire click so an empty mag isn't silent
+            }
+ 
             _fpsAnimator.SetBool("isFiring", wantsToFire);
         }
 
         private void Shoot()
         {
+            
             SpawnMuzzleFlash();
-
+            PlaySound(_shootSound);
+ 
             _currentAmmo--;
             UpdateAmmoUI();
 
-            // NOTE: previously this passed a mask of layers to EXCLUDE, but Raycast's
-            // layerMask parameter is inclusive - it only hits layers listed in it.
-            // Fixed by hitting everything except the excluded layers via the inverted mask
-            // baked into _hittableLayers (set it in the Inspector to "everything but Player").
             bool hitSomething = Physics.Raycast(
                 _firePoint.position,
                 _firePoint.forward,
                 out RaycastHit hit,
                 _range,
                 _hittableLayers);
-
+ 
             if (!hitSomething) return;
-
+ 
             ApplyDamage(hit);
             SpawnImpactEffect(hit);
             ApplyImpactForce(hit);
@@ -137,6 +142,7 @@ namespace My_Scripts
 
             _isReloading = true;
             _fpsAnimator.SetTrigger("onReload");
+            PlaySound(_reloadSound);
         }
 
         public void FinishReloading()
@@ -149,6 +155,14 @@ namespace My_Scripts
         private void UpdateAmmoUI()
         {
             UIManager.Instance?.UpdateAmmoUI(_currentAmmo, _magazineSize);
+        }
+        
+        private void PlaySound(AudioClip clip)
+        {
+            if (_audioSource != null && clip != null)
+            {
+                _audioSource.PlayOneShot(clip);
+            }
         }
     }
 }

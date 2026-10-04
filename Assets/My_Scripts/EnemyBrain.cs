@@ -20,7 +20,7 @@ namespace My_Scripts
         [SerializeField] private float _attackRange = 2.5f;
         [SerializeField] private float _chaseRange = 15f;
         [SerializeField] private float _jumpRange = 7f;
-        [SerializeField] private float _minJumpRange = 4f; // closer than this: chase/melee instead of leaping in place
+        [SerializeField] private float _minJumpRange = 4f; 
         [SerializeField] private float _landJumpDistance = 5f;
 
         [Header("Timing")]
@@ -35,6 +35,11 @@ namespace My_Scripts
         [SerializeField] private float _attackDamage = 10f;
         [SerializeField] private float _jumpLandingDamage = 20f;
         [SerializeField] private float _deathDestroyDelay = 4f;
+
+        [Header("Audio")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _hitSound;
+        [SerializeField] private AudioClip _landSound;
 
         // Cached animator parameter hashes (cheaper than string lookups every frame)
         private static readonly int HashIsRunning = Animator.StringToHash("isRunning");
@@ -102,14 +107,12 @@ namespace My_Scripts
                 return;
             }
 
-            // Player is dead: stop chasing/attacking (ParasiteBrain already did this, this one didn't)
             if (_playerController != null && _playerController.IsDead)
             {
                 EnterIdle();
                 return;
             }
 
-            // Freeze all logic while the jump-attack animation is actually playing
             if (_animator.GetCurrentAnimatorStateInfo(0).shortNameHash == HashJumpAttack)
             {
                 _agent.isStopped = true;
@@ -170,10 +173,6 @@ namespace My_Scripts
             _state = State.Jumping;
             _agent.isStopped = true;
 
-            // NavMeshAgent only rotates the transform while actively moving (Chasing).
-            // If the jump triggers straight from Idle (player suddenly within jump range
-            // without a chase in between), the enemy is still facing wherever it was
-            // before and the leap fires in that stale direction. Snap-face the player now.
             SnapRotateTowardsPlayer();
 
             _animator.SetTrigger(HashJumpAttack);
@@ -185,11 +184,9 @@ namespace My_Scripts
         {
             var ct = this.GetCancellationTokenOnDestroy();
 
-            // Wait out the crouch/wind-up part of the animation before taking off.
             await UniTask.Delay(System.TimeSpan.FromSeconds(_jumpWindupTime), cancellationToken: ct);
             if (_isDead || _state != State.Jumping) return;
 
-            // The landing point is fixed at takeoff (not tracked live), so the player can dodge.
             Vector3 start = transform.position;
             Vector3 toPlayer = _player.position - start;
             toPlayer.y = 0f;
@@ -197,10 +194,8 @@ namespace My_Scripts
             float distance = Mathf.Max(0f, toPlayer.magnitude - _jumpLandShortBy);
             Vector3 target = start + toPlayer.normalized * distance;
 
-            Debug.Log($"{name}: leap distance {distance:F1}m over {_jumpAirTime:F1}s"); // temporary, remove when tuned
+            Debug.Log($"{name}: leap distance {distance:F1}m over {_jumpAirTime:F1}s"); 
 
-            // Take the NavMeshAgent out of the picture while airborne so nothing fights the movement
-            // (isStopped, path following, root motion snap-back). It is restored in finally.
             _agent.enabled = false;
             try
             {
@@ -214,7 +209,6 @@ namespace My_Scripts
             }
             finally
             {
-                // `this != null` is Unity's destroyed-object check (covers cancellation on destroy)
                 if (this != null && !_isDead)
                 {
                     ResumeAgentAt(transform.position);
@@ -231,7 +225,6 @@ namespace My_Scripts
                 _agent.Warp(hit.position);
             }
 
-            // Still mid-jump-animation: stay stopped until the OnJumpAnimationEvent releases us.
             _agent.isStopped = _state == State.Jumping;
         }
 
@@ -269,7 +262,7 @@ namespace My_Scripts
             _isDead = true;
             _state = State.Idle;
 
-            _agent.enabled = false; // stop nav so the corpse doesn't float
+            _agent.enabled = false; 
             _animator.ResetTrigger(HashAttack);
             _animator.SetBool(HashIsRunning, false);
             _animator.SetBool(HashIsDead, true);
@@ -289,11 +282,15 @@ namespace My_Scripts
         {
             _state = State.Idle;
 
-            // Agent is disabled while the scripted leap is airborne; ResumeAgentAt handles it then.
             if (_agent.enabled)
             {
                 _agent.isStopped = false;
             }
+        }
+
+        public void HitSoundEffect()
+        {
+            PlaySound(_hitSound);
         }
 
         /// <summary>Animation event: fired on the swipe's hit frame.</summary>
@@ -314,6 +311,7 @@ namespace My_Scripts
         public void LandFromJump()
         {
             _impulseSource?.GenerateImpulse();
+            PlaySound(_landSound);
 
             if (_playerDamageable == null) return;
 
@@ -323,6 +321,13 @@ namespace My_Scripts
                 _playerDamageable.TakeDamage(_jumpLandingDamage);
             }
         }
-    }
 
+        private void PlaySound(AudioClip clip)
+        {
+            if (_audioSource != null && clip != null)
+            {
+                _audioSource.PlayOneShot(clip);
+            }
+        }
+    }
 }

@@ -29,6 +29,10 @@ namespace My_Scripts
         [SerializeField] private float _attackCooldown = 0.5f;
         [SerializeField] private float _damageAmount = 10f;
 
+        [Header("Audio")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _hitSound; 
+
         private static readonly int HashIsChasing = Animator.StringToHash("isChasing");
         private static readonly int HashIsWalking = Animator.StringToHash("isWalking");
         private static readonly int HashAttackState = Animator.StringToHash("Mutant Swiping");
@@ -69,8 +73,6 @@ namespace My_Scripts
 
         private void Update()
         {
-            // Dead and Attacking are the two states Update() must not override:
-            // Dead is permanent, Attacking is released only by the animation event.
             if (_state == State.Dead || _state == State.Attacking) return;
             if (_playerController != null && _playerController.IsDead) return;
             if (_player == null) return;
@@ -112,8 +114,9 @@ namespace My_Scripts
             if (!cooldownOver) return;
 
             _lastAttackTime = Time.time;
-            _state = State.Attacking; // Update() now skips CalculateAIBehavior until the animation event fires
+            _state = State.Attacking; 
             _animator.Play(HashAttackState, 0, 0f);
+            
         }
 
         private void HandleChaseState()
@@ -146,16 +149,12 @@ namespace My_Scripts
         /// <summary>Animation event: add this at the end of the attack animation clip.</summary>
         public void OnAttackAnimationFinished()
         {
-            if (_state == State.Dead) return; // died mid-attack - don't resurrect the state machine
+            if (_state == State.Dead) return;
 
-            // Hand back to Patrolling; Update() re-evaluates the real distance to the
-            // player next frame and will immediately switch to Chasing/Attacking if needed.
             _state = State.Patrolling;
             ResumeAgentNextFrame().Forget();
         }
-
-        // Waits one frame before releasing the agent, mirroring the original coroutine's
-        // timing (lets the animator/NavMesh state settle before movement resumes).
+        
         private async UniTaskVoid ResumeAgentNextFrame()
         {
             await UniTask.Yield(PlayerLoopTiming.Update, this.GetCancellationTokenOnDestroy());
@@ -213,12 +212,21 @@ namespace My_Scripts
 
         public void HitPlayer()
         {
+            PlaySound(_hitSound);
             if (_playerDamageable == null) return;
 
             float distance = Vector3.Distance(transform.position, _player.position);
             if (distance <= _attackRange + 0.5f)
             {
                 _playerDamageable.TakeDamage(_damageAmount);
+            }
+        }
+        
+        private void PlaySound(AudioClip clip)
+        {
+            if (_audioSource != null && clip != null)
+            {
+                _audioSource.PlayOneShot(clip);
             }
         }
     }

@@ -109335,7 +109335,7 @@ AnimationClip:
   m_HasGenericRootTransform: 0
   m_HasMotionFloatCurves: 0
   m_Events:
-  - time: 1.8333334
+  - time: 1.5
     functionName: LandFromJump
     data: 
     objectReferenceParameter: {fileID: 7157715376209904975, guid: 14b908e0282224347963e19aa26a0a09,

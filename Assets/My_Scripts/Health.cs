@@ -18,9 +18,13 @@ namespace My_Scripts
 
         [Header("Boss Settings")]
         [SerializeField] private string _bossName;
+
+        [Header("Audio")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _hurtSound; 
         private float _currentHealth;
         private bool IsBoss => !string.IsNullOrEmpty(_bossName);
-        
+
         public float CurrentHealth => _currentHealth;
         public float MaxHealth => _maxHealth;
 
@@ -57,6 +61,7 @@ namespace My_Scripts
             Debug.Log($"{gameObject.name} получил урон. ХП: {_currentHealth}");
 
             RestartFlash();
+            PlaySound(_hurtSound);
 
             OnHealthChanged?.Invoke(_currentHealth, _maxHealth);
             OnTakeDamage?.Invoke();
@@ -89,7 +94,6 @@ namespace My_Scripts
         {
             if (_meshRenderer == null) return;
 
-            // Cancel any flash already in progress so rapid hits don't stack fade-backs
             _flashCts?.Cancel();
             _flashCts?.Dispose();
             _flashCts = new CancellationTokenSource();
@@ -107,6 +111,14 @@ namespace My_Scripts
             if (!cancelled)
             {
                 _meshRenderer.material.color = _originalColor;
+            }
+        }
+
+        private void PlaySound(AudioClip clip)
+        {
+            if (_audioSource != null && clip != null)
+            {
+                _audioSource.PlayOneShot(clip);
             }
         }
     }
